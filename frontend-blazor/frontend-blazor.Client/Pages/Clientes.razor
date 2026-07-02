@@ -1,0 +1,246 @@
+@page "/catalogos/clientes"
+@using frontend_blazor.Client.Models
+@inject HttpClient Http
+@inject IJSRuntime JS
+@rendermode InteractiveWebAssembly
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary fw-bold">
+            <i class="bi bi-people-fill me-2"></i> Gestión de Clientes (AdventureWorks)
+        </h2>
+        <button class="btn btn-success fw-bold shadow-sm" @onclick="AbrirModalCrear">
+            <i class="bi bi-person-plus-fill me-1"></i> Nuevo Cliente
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensajeError))
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @mensajeError
+            <button type="button" class="btn-close" @onclick="() => mensajeError = null"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body bg-light">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" class="form-control border-start-0" placeholder="Buscar cliente por nombre o apellido..." @bind="busqueda" @bind:event="oninput" />
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            @if (listaClientes == null && string.IsNullOrEmpty(mensajeError))
+            {
+                <div class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted">Cargando registros desde la API de Python...</p>
+                </div>
+            }
+            else if (clientesFiltrados == null || !clientesFiltrados.Any())
+            {
+                <div class="alert alert-warning m-3 text-center">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> No se encontraron clientes registrados o la lista está vacía.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped align-middle mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th class="ps-3">ID Cliente</th>
+                                <th>Número Cuenta</th>
+                                <th>Nombre</th>
+                                <th>Apellido</th>
+                                <th>ID Territorio</th>
+                                <th class="text-center pe-3">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cli in clientesFiltrados)
+                            {
+                                <tr>
+                                    <td class="ps-3 fw-bold text-secondary">@cli.CustomerID</td>
+                                    <td><span class="badge bg-light text-dark border">@cli.AccountNumber</span></td>
+                                    <td>@cli.FirstName</td>
+                                    <td>@cli.LastName</td>
+                                    <td><span class="badge bg-info text-dark fw-semibold">@cli.TerritoryID</span></td>
+                                    <td class="text-center pe-3">
+                                        <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => AbrirModalEditar(cli)">
+                                            <i class="bi bi-pencil-square"></i> Editar
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmarEliminar(cli.CustomerID)">
+                                            <i class="bi bi-trash3-fill"></i> Eliminar
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@if (mostrarModal)
+{
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="@(esNuevo ? "bi bi-person-plus" : "bi bi-pencil-square") me-2"></i>
+                        @(esNuevo ? "Registrar Nuevo Cliente" : "Actualizar Cliente")
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModal"></button>
+                </div>
+                <EditForm Model="clienteForm" OnValidSubmit="GuardarCliente">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Nombre (*)</label>
+                            <InputText class="form-control" @bind-Value="clienteForm.FirstName" placeholder="Ej. John" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Apellido (*)</label>
+                            <InputText class="form-control" @bind-Value="clienteForm.LastName" placeholder="Ej. Doe" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">ID Territorio (*)</label>
+                            <InputNumber class="form-control" @bind-Value="clienteForm.TerritoryID" min="1" max="10" required />
+                            <small class="text-muted">Códigos de territorio válidos en AdventureWorks: del 1 al 10.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
+                        <button type="submit" class="btn btn-success fw-bold px-4">
+                            <i class="bi bi-cloud-arrow-up-fill me-1"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<ClienteModel>? listaClientes;
+    private ClienteModel clienteForm = new();
+    private string busqueda = "";
+    private bool mostrarModal = false;
+    private bool esNuevo = true;
+    private int idClienteSeleccionado;
+    private string? mensajeError;
+
+    private IEnumerable<ClienteModel>? clientesFiltrados => 
+        string.IsNullOrWhiteSpace(busqueda) 
+            ? listaClientes 
+            : listaClientes?.Where(c => 
+                (c.FirstName?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false) || 
+                (c.LastName?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarClientes();
+    }
+
+    private async Task CargarClientes()
+    {
+        try
+        {
+            mensajeError = null;
+            listaClientes = await Http.GetFromJsonAsync<List<ClienteModel>>("api/clientes");
+        }
+        catch (Exception ex)
+        {
+            listaClientes = new List<ClienteModel>();
+            mensajeError = $"Error al conectar con el backend de Python: {ex.Message}. Asegúrate de que el servidor FastAPI esté corriendo en el puerto 8000.";
+        }
+    }
+
+    private void AbrirModalCrear()
+    {
+        clienteForm = new ClienteModel { TerritoryID = 1 };
+        esNuevo = true;
+        mostrarModal = true;
+    }
+
+    private void AbrirModalEditar(ClienteModel cliente)
+    {
+        idClienteSeleccionado = cliente.CustomerID;
+        clienteForm = new ClienteModel 
+        { 
+            FirstName = cliente.FirstName, 
+            LastName = cliente.LastName, 
+            TerritoryID = cliente.TerritoryID 
+        };
+        esNuevo = false;
+        mostrarModal = true;
+    }
+
+    private void CerrarModal()
+    {
+        mostrarModal = false;
+    }
+
+    private async Task GuardarCliente()
+    {
+        try
+        {
+            HttpResponseMessage respuesta;
+            if (esNuevo)
+            {
+                respuesta = await Http.PostAsJsonAsync("api/clientes", clienteForm);
+            }
+            else
+            {
+                respuesta = await Http.PutAsJsonAsync($"api/clientes/{idClienteSeleccionado}", clienteForm);
+            }
+
+            if (respuesta.IsSuccessStatusCode)
+            {
+                CerrarModal();
+                await CargarClientes();
+            }
+            else
+            {
+                var err = await respuesta.Content.ReadAsStringAsync();
+                mensajeError = $"Error al guardar: {err}";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Excepción al procesar la solicitud: {ex.Message}";
+        }
+    }
+
+    private async Task ConfirmarEliminar(int id)
+    {
+        // Esta llamada ocurre tras una acción de usuario (clic), por lo que JS ya está disponible de forma segura.
+        bool confirmado = await JS.InvokeAsync<bool>("confirm", $"¿Está seguro de que desea eliminar permanentemente al cliente con ID {id}?");
+        if (confirmado)
+        {
+            try
+            {
+                var respuesta = await Http.DeleteAsync($"api/clientes/{id}");
+                if (respuesta.IsSuccessStatusCode)
+                {
+                    await CargarClientes();
+                }
+                else
+                {
+                    mensajeError = "No se pudo eliminar el cliente. Comprueba si tiene órdenes de venta asociadas en la base de datos.";
+                }
+            }
+            catch (Exception ex)
+            {
+                mensajeError = $"Error al eliminar: {ex.Message}";
+            }
+        }
+    }
+}

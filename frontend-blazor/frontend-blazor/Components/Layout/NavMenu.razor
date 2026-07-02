@@ -1,0 +1,99 @@
+﻿<div class="top-row ps-3 navbar navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand text-truncate fw-bold" href="">
+            <i class="bi bi-shield-shaded me-2"></i>AdventureWorks Sales
+        </a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-column navbar-dark">
+        
+        <div class="nav-item px-3">
+            <NavLink class="nav-link text-white my-1" href="" Match="NavLinkMatch.All">
+                <i class="bi bi-house-door-fill me-2"></i> Inicio
+            </NavLink>
+        </div>
+
+        <hr class="text-secondary mx-3 my-2" />
+
+        <div class="px-3 pt-2 pb-1">
+            <span class="text-uppercase text-muted fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">Catálogos</span>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link text-white my-1" href="catalogos/clientes">
+                <i class="bi bi-people-fill me-2"></i> Clientes
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link text-white my-1" href="catalogos/vendedores">
+                <i class="bi bi-person-badge-fill me-2"></i> Vendedores
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link text-white my-1" href="catalogos/productos">
+                <i class="bi bi-box-seam-fill me-2"></i> Productos
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link text-white my-1" href="catalogos/categorias">
+                <i class="bi bi-tags-fill me-2"></i> Categorías
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link text-white my-1" href="catalogos/subcategorias">
+                <i class="bi bi-tag-fill me-2"></i> Subcategorías
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link text-white my-1" href="catalogos/territorios">
+                <i class="bi bi-globe-americas me-2"></i> Territorios
+            </NavLink>
+        </div>
+
+        <hr class="text-secondary mx-3 my-2" />
+
+        <div class="px-3 pt-2 pb-1">
+            <span class="text-uppercase text-muted fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">Movimientos</span>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link text-white my-1" href="movimientos/ventas">
+                <i class="bi bi-cart-dash-fill me-2"></i> Gestión de Ventas
+            </NavLink>
+        </div>
+
+        <hr class="text-secondary mx-3 my-2" />
+
+        <div class="px-3 pt-2 pb-1">
+            <span class="text-uppercase text-muted fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">Reportes</span>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link text-white my-1" href="reportes/ventas">
+                <i class="bi bi-file-earmark-bar-graph-fill me-2"></i> Reportes de Ventas
+            </NavLink>
+        </div>
+
+        <hr class="text-secondary mx-3 my-2" />
+
+        <div class="px-3 pt-2 pb-1">
+            <span class="text-uppercase text-muted fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">Configuración</span>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-white text-white my-1 nav-link" href="administracion/usuarios">
+                <i class="bi bi-gear-fill me-2"></i> Usuarios y Accesos
+            </NavLink>
+        </div>
+
+    </nav>
+</div>

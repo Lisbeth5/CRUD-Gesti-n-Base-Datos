@@ -1,0 +1,45 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "1. Iniciar Backend Python",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}/backend-python"
+            },
+            "command": "powershell",
+            "args": [
+                "-ExecutionPolicy", "Bypass",
+                "-NoExit",
+                "-Command", "& { .\\venv\\Scripts\\activate; uvicorn main:app --reload }"
+            ],
+            "presentation": {
+                "group": "adventureworks",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "2. Iniciar Frontend Blazor",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}/frontend-blazor"
+            },
+            "command": "dotnet watch",
+            "presentation": {
+                "group": "adventureworks",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "ARRANCAR PROYECTO COMPLETO",
+            "dependsOn": [
+                "1. Iniciar Backend Python",
+                "2. Iniciar Frontend Blazor"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

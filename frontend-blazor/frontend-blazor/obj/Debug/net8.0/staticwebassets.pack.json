@@ -1,0 +1,41 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\ASUS\\Documents\\CRUD-S.G.B.D\\frontend-blazor\\frontend-blazOR\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\frontend-blazor.bundle.scp.css",
+      "PackagePath": "staticwebassets\\frontend-blazor.bundle.scp.css"
+    },
+    {
+      "Id": "C:\\Users\\ASUS\\Documents\\CRUD-S.G.B.D\\frontend-blazor\\frontend-blazOR\\wwwroot\\app.css",
+      "PackagePath": "staticwebassets\\app.css"
+    },
+    {
+      "Id": "C:\\Users\\ASUS\\Documents\\CRUD-S.G.B.D\\frontend-blazor\\frontend-blazOR\\wwwroot\\bootstrap\\bootstrap.min.css",
+      "PackagePath": "staticwebassets\\bootstrap\\bootstrap.min.css"
+    },
+    {
+      "Id": "C:\\Users\\ASUS\\Documents\\CRUD-S.G.B.D\\frontend-blazor\\frontend-blazOR\\wwwroot\\bootstrap\\bootstrap.min.css.map",
+      "PackagePath": "staticwebassets\\bootstrap\\bootstrap.min.css.map"
+    },
+    {
+      "Id": "C:\\Users\\ASUS\\Documents\\CRUD-S.G.B.D\\frontend-blazor\\frontend-blazOR\\wwwroot\\favicon.png",
+      "PackagePath": "staticwebassets\\favicon.png"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.frontend-blazor.props",
+      "PackagePath": "build\\frontend-blazor.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.frontend-blazor.props",
+      "PackagePath": "buildMultiTargeting\\frontend-blazor.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.frontend-blazor.props",
+      "PackagePath": "buildTransitive\\frontend-blazor.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.frontend-blazor.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    }
+  ],
+  "ElementsToRemove": []
+}
