@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "targets": {
     "net8.0": {
       "Microsoft.AspNetCore.Authorization/8.0.28": {
@@ -421,7 +421,7 @@
           "build/Microsoft.NET.ILLink.Tasks.props": {}
         }
       },
-      "Microsoft.NET.Sdk.WebAssembly.Pack/8.0.28": {
+      "Microsoft.NET.Sdk.WebAssembly.Pack/10.0.9": {
         "type": "package",
         "build": {
           "build/Microsoft.NET.Sdk.WebAssembly.Pack.props": {},
@@ -865,7 +865,7 @@
           "build/Microsoft.NET.ILLink.Tasks.props": {}
         }
       },
-      "Microsoft.NET.Sdk.WebAssembly.Pack/8.0.28": {
+      "Microsoft.NET.Sdk.WebAssembly.Pack/10.0.9": {
         "type": "package",
         "build": {
           "build/Microsoft.NET.Sdk.WebAssembly.Pack.props": {},
@@ -1585,20 +1585,20 @@
         "useSharedDesignerContext.txt"
       ]
     },
-    "Microsoft.NET.Sdk.WebAssembly.Pack/8.0.28": {
-      "sha512": "LelNU3imCRgs5lDs2K2byljNHuP2UvVybNujFXL4UwyQppREvrtuoJRqa6qRC5bnNUyuWlfKmzhWrzAea+TY8w==",
+    "Microsoft.NET.Sdk.WebAssembly.Pack/10.0.9": {
+      "sha512": "VZrxevxXB2tmpyRKTbvVCNUt3GsJiOvWokwa7G328bQf7rKap9cNHPWrtPzTAWNphL7b6byHclNu1jc4QXv46w==",
       "type": "package",
-      "path": "microsoft.net.sdk.webassembly.pack/8.0.28",
+      "path": "microsoft.net.sdk.webassembly.pack/10.0.9",
       "hasTools": true,
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
-        "LICENSE.TXT",
         "THIRD-PARTY-NOTICES.TXT",
         "WasmAppHost/BrowserDebugHost.deps.json",
         "WasmAppHost/BrowserDebugHost.dll",
         "WasmAppHost/BrowserDebugHost.runtimeconfig.json",
+        "WasmAppHost/BrowserDebugHost.staticwebassets.endpoints.json",
         "WasmAppHost/BrowserDebugProxy.dll",
         "WasmAppHost/Microsoft.CodeAnalysis.CSharp.Scripting.dll",
         "WasmAppHost/Microsoft.CodeAnalysis.CSharp.dll",
@@ -1611,17 +1611,19 @@
         "WasmAppHost/WasmAppHost.deps.json",
         "WasmAppHost/WasmAppHost.dll",
         "WasmAppHost/WasmAppHost.runtimeconfig.json",
+        "WasmAppHost/WasmAppHost.staticwebassets.endpoints.json",
         "build/Microsoft.NET.Sdk.WebAssembly.Browser.props",
         "build/Microsoft.NET.Sdk.WebAssembly.Browser.targets",
         "build/Microsoft.NET.Sdk.WebAssembly.Pack.props",
         "build/Microsoft.NET.Sdk.WebAssembly.Pack.targets",
         "build/Wasm.web.config",
-        "microsoft.net.sdk.webassembly.pack.8.0.28.nupkg.sha512",
+        "build/browser.runtimeconfig.template.json",
+        "microsoft.net.sdk.webassembly.pack.10.0.9.nupkg.sha512",
         "microsoft.net.sdk.webassembly.pack.nuspec",
+        "tools/net10.0/Microsoft.NET.Sdk.WebAssembly.Pack.Tasks.dll",
+        "tools/net10.0/Microsoft.NET.WebAssembly.Webcil.dll",
         "tools/net472/Microsoft.NET.Sdk.WebAssembly.Pack.Tasks.dll",
-        "tools/net472/Microsoft.NET.WebAssembly.Webcil.dll",
-        "tools/net8.0/Microsoft.NET.Sdk.WebAssembly.Pack.Tasks.dll",
-        "tools/net8.0/Microsoft.NET.WebAssembly.Webcil.dll"
+        "tools/net472/Microsoft.NET.WebAssembly.Webcil.dll"
       ]
     },
     "System.IO.Pipelines/8.0.0": {
@@ -1658,23 +1660,23 @@
     "net8.0": [
       "Microsoft.AspNetCore.Components.WebAssembly >= 8.0.28",
       "Microsoft.NET.ILLink.Tasks >= 8.0.28",
-      "Microsoft.NET.Sdk.WebAssembly.Pack >= 8.0.28"
+      "Microsoft.NET.Sdk.WebAssembly.Pack >= 10.0.9"
     ]
   },
   "packageFolders": {
-    "C:\\Users\\ASUS\\.nuget\\packages\\": {}
+    "C:\\Users\\ramse\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\ASUS\\Documents\\CRUD-S.G.B.D\\frontend-blazor\\frontend-blazor.Client\\frontend-blazor.Client.csproj",
+      "projectUniqueName": "C:\\Users\\ramse\\OneDrive\\Escritorio\\proyecto\\Version con Python\\CRUD-Gesti-n-Base-Datos\\frontend-blazor\\frontend-blazor.Client\\frontend-blazor.Client.csproj",
       "projectName": "frontend-blazor.Client",
-      "projectPath": "C:\\Users\\ASUS\\Documents\\CRUD-S.G.B.D\\frontend-blazor\\frontend-blazor.Client\\frontend-blazor.Client.csproj",
-      "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\ASUS\\Documents\\CRUD-S.G.B.D\\frontend-blazor\\frontend-blazor.Client\\obj\\",
+      "projectPath": "C:\\Users\\ramse\\OneDrive\\Escritorio\\proyecto\\Version con Python\\CRUD-Gesti-n-Base-Datos\\frontend-blazor\\frontend-blazor.Client\\frontend-blazor.Client.csproj",
+      "packagesPath": "C:\\Users\\ramse\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\ramse\\OneDrive\\Escritorio\\proyecto\\Version con Python\\CRUD-Gesti-n-Base-Datos\\frontend-blazor\\frontend-blazor.Client\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\ASUS\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\ramse\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -1684,6 +1686,7 @@
       },
       "frameworks": {
         "net8.0": {
+          "framework": "net8.0",
           "targetAlias": "net8.0",
           "projectReferences": {}
         }
@@ -1697,10 +1700,12 @@
         "enableAudit": "true",
         "auditLevel": "low",
         "auditMode": "direct"
-      }
+      },
+      "SdkAnalysisLevel": "10.0.300"
     },
     "frameworks": {
       "net8.0": {
+        "framework": "net8.0",
         "targetAlias": "net8.0",
         "dependencies": {
           "Microsoft.AspNetCore.Components.WebAssembly": {
@@ -1716,7 +1721,7 @@
           "Microsoft.NET.Sdk.WebAssembly.Pack": {
             "suppressParent": "All",
             "target": "Package",
-            "version": "[8.0.28, )",
+            "version": "[10.0.9, )",
             "autoReferenced": true
           }
         },
@@ -1733,7 +1738,19 @@
         "warn": true,
         "downloadDependencies": [
           {
+            "name": "Microsoft.AspNetCore.App.Ref",
+            "version": "[8.0.28, 8.0.28]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Ref",
+            "version": "[8.0.28, 8.0.28]"
+          },
+          {
             "name": "Microsoft.NETCore.App.Runtime.Mono.browser-wasm",
+            "version": "[8.0.28, 8.0.28]"
+          },
+          {
+            "name": "Microsoft.WindowsDesktop.App.Ref",
             "version": "[8.0.28, 8.0.28]"
           }
         ],
@@ -1742,7 +1759,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.422/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301/PortableRuntimeIdentifierGraph.json"
       }
     },
     "runtimes": {

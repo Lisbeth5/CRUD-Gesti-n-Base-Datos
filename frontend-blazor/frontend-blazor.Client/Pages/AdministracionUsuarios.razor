@@ -1,0 +1,931 @@
+@page "/administracion/usuarios"
+@using frontend_blazor.Client.Models
+@inject HttpClient Http
+@inject IJSRuntime JS
+@rendermode InteractiveWebAssembly
+
+<div class="container-fluid mt-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <h2 class="text-primary fw-bold mb-0">
+            <i class="bi bi-gear-fill me-2"></i> Usuarios y Accesos
+        </h2>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary fw-bold shadow-sm" @onclick="CargarDatos" disabled="@cargando">
+                <i class="bi bi-arrow-clockwise me-1"></i> Actualizar
+            </button>
+            @if (vistaActiva == "usuarios")
+            {
+                <button class="btn btn-success fw-bold shadow-sm" @onclick="AbrirCrearUsuario">
+                    <i class="bi bi-person-plus-fill me-1"></i> Nuevo Usuario
+                </button>
+            }
+            else
+            {
+                <button class="btn btn-success fw-bold shadow-sm" @onclick="AbrirCrearRol">
+                    <i class="bi bi-plus-circle-fill me-1"></i> Nuevo Rol
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(mensajeError))
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @mensajeError
+            <button type="button" class="btn-close" @onclick="() => mensajeError = null"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(mensajeExito))
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> @mensajeExito
+            <button type="button" class="btn-close" @onclick="() => mensajeExito = null"></button>
+        </div>
+    }
+
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <button class='@ClaseTab("usuarios")' @onclick='() => CambiarVista("usuarios")'>Usuarios</button>
+        </li>
+        <li class="nav-item">
+            <button class='@ClaseTab("roles")' @onclick='() => CambiarVista("roles")'>Roles</button>
+        </li>
+    </ul>
+
+    @if (vistaActiva == "usuarios")
+    {
+        <div class="card shadow-sm mb-4">
+            <div class="card-body bg-light">
+                <div class="row g-3 align-items-end">
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <label class="form-label fw-semibold">Buscar usuario</label>
+                        <input type="text" class="form-control" placeholder="Usuario, nombre, correo o rol..." @bind="busquedaUsuarios" @bind:event="oninput" />
+                    </div>
+                    <div class="col-12 col-md-auto">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="incluirInactivos" @bind="incluirInactivos" @bind:after="CargarUsuarios" />
+                            <label class="form-check-label fw-semibold" for="incluirInactivos">Incluir inactivos</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                @if (cargando)
+                {
+                    <div class="text-center p-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2 text-muted">Cargando usuarios desde la API de Python...</p>
+                    </div>
+                }
+                else if (!UsuariosFiltrados.Any())
+                {
+                    <div class="alert alert-warning m-3 text-center">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> No se encontraron usuarios.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="ps-3">ID</th>
+                                    <th>Usuario</th>
+                                    <th>Nombre</th>
+                                    <th>Correo</th>
+                                    <th>Estado</th>
+                                    <th>Roles</th>
+                                    <th>Creacion</th>
+                                    <th class="text-center pe-3">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var usuario in UsuariosFiltrados)
+                                {
+                                    <tr>
+                                        <td class="ps-3 fw-bold text-secondary">@usuario.UsuarioID</td>
+                                        <td>@usuario.Usuario</td>
+                                        <td>@usuario.NombreCompleto</td>
+                                        <td>@usuario.Correo</td>
+                                        <td>
+                                            <span class="@ClaseEstado(usuario.Activo)">@(usuario.Activo ? "Activo" : "Inactivo")</span>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-link text-start p-0 text-decoration-none" title="Ver todos los roles" @onclick="() => AbrirDetalleUsuario(usuario)">
+                                                <span class="d-flex flex-wrap gap-1">
+                                                    @foreach (var rol in RolesResumen(usuario.Roles))
+                                                    {
+                                                        <span class="badge bg-light text-dark border">@rol</span>
+                                                    }
+                                                    @if (CantidadRolesOcultos(usuario.Roles) > 0)
+                                                    {
+                                                        <span class="badge bg-secondary">+@CantidadRolesOcultos(usuario.Roles)</span>
+                                                    }
+                                                </span>
+                                            </button>
+                                        </td>
+                                        <td>@usuario.FechaCreacion.ToString("yyyy-MM-dd")</td>
+                                        <td class="text-center pe-3">
+                                            <div class="d-flex flex-wrap gap-1 justify-content-center">
+                                                <button class="btn btn-sm btn-outline-primary" @onclick="() => AbrirEditarUsuario(usuario)">
+                                                    <i class="bi bi-pencil-square me-1"></i>Editar
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-info" @onclick="() => AbrirAsignarRoles(usuario)">
+                                                    <i class="bi bi-person-badge-fill me-1"></i>Roles
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-warning" @onclick="() => AbrirReiniciarPassword(usuario)">
+                                                    <i class="bi bi-key-fill me-1"></i>Password
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-secondary" @onclick='() => ConfirmarEliminarUsuario(usuario, "desactivar")' disabled="@(!usuario.Activo)">
+                                                    <i class="bi bi-person-x-fill me-1"></i>Desactivar
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" @onclick='() => ConfirmarEliminarUsuario(usuario, "eliminar")'>
+                                                    <i class="bi bi-trash3-fill me-1"></i>Eliminar
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm mb-4">
+            <div class="card-body bg-light">
+                <div class="row g-3 align-items-end">
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <label class="form-label fw-semibold">Buscar rol</label>
+                        <input type="text" class="form-control" placeholder="Nombre de rol..." @bind="busquedaRoles" @bind:event="oninput" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                @if (cargando)
+                {
+                    <div class="text-center p-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2 text-muted">Cargando roles desde la API de Python...</p>
+                    </div>
+                }
+                else if (!RolesFiltrados.Any())
+                {
+                    <div class="alert alert-warning m-3 text-center">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> No se encontraron roles.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="ps-3">ID</th>
+                                    <th>Rol</th>
+                                    <th class="text-center pe-3">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var rol in RolesFiltrados)
+                                {
+                                    <tr>
+                                        <td class="ps-3 fw-bold text-secondary">@rol.RolID</td>
+                                        <td>@rol.NombreRol</td>
+                                        <td class="text-center pe-3">
+                                            <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => AbrirEditarRol(rol)">
+                                                <i class="bi bi-pencil-square"></i> Editar
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmarEliminarRol(rol)">
+                                                <i class="bi bi-trash3-fill"></i> Eliminar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@if (mostrarModalUsuario)
+{
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="@(editandoUsuario ? "bi bi-pencil-square" : "bi bi-person-plus") me-2"></i>
+                        @(editandoUsuario ? "Editar Usuario" : "Nuevo Usuario")
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModalUsuario"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Usuario</label>
+                        <input class="form-control" @bind="usuarioForm.Usuario" maxlength="50" />
+                    </div>
+                    @if (!editandoUsuario)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Contrasena</label>
+                            <input type="password" class="form-control" @bind="passwordNuevoUsuario" maxlength="72" />
+                            <small class="text-muted">Minimo 8 caracteres.</small>
+                        </div>
+                    }
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nombre Completo</label>
+                        <input class="form-control" @bind="usuarioForm.NombreCompleto" maxlength="120" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Correo</label>
+                        <input type="email" class="form-control" @bind="usuarioForm.Correo" maxlength="150" />
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="usuarioActivo" @bind="usuarioForm.Activo" />
+                        <label class="form-check-label fw-semibold" for="usuarioActivo">Activo</label>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModalUsuario">Cancelar</button>
+                    <button type="button" class="btn btn-success fw-bold px-4" @onclick="GuardarUsuario" disabled="@guardando">
+                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (mostrarModalRol)
+{
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="@(editandoRol ? "bi bi-pencil-square" : "bi bi-plus-circle") me-2"></i>
+                        @(editandoRol ? "Editar Rol" : "Nuevo Rol")
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModalRol"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label fw-semibold">Nombre del rol</label>
+                    <input class="form-control" @bind="rolForm.NombreRol" maxlength="50" />
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModalRol">Cancelar</button>
+                    <button type="button" class="btn btn-success fw-bold px-4" @onclick="GuardarRol" disabled="@guardando">
+                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (mostrarModalPassword)
+{
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-key-fill me-2"></i> Reiniciar Contrasena
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="CerrarModalPassword"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Usuario: <strong>@usuarioSeleccionado?.Usuario</strong></p>
+                    <label class="form-label fw-semibold">Nueva contrasena</label>
+                    <input type="password" class="form-control" @bind="nuevaPassword" maxlength="72" />
+                    <small class="text-muted">Minimo 8 caracteres.</small>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModalPassword">Cancelar</button>
+                    <button type="button" class="btn btn-warning fw-bold px-4" @onclick="ReiniciarPassword" disabled="@guardando">
+                        <i class="bi bi-key-fill me-1"></i> Reiniciar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (mostrarModalRoles)
+{
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-person-badge-fill me-2"></i> Asignar Roles
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModalRoles"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Usuario: <strong>@usuarioSeleccionado?.Usuario</strong></p>
+                    @if (!roles.Any())
+                    {
+                        <div class="alert alert-warning mb-0">No hay roles registrados.</div>
+                    }
+                    else
+                    {
+                        @foreach (var rol in roles)
+                        {
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="@($"rol-{rol.RolID}")" checked="@rolesSeleccionados.Contains(rol.RolID)" @onchange="args => CambiarRolSeleccionado(rol.RolID, args)" />
+                                <label class="form-check-label" for="@($"rol-{rol.RolID}")">@rol.NombreRol</label>
+                            </div>
+                        }
+                    }
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModalRoles">Cancelar</button>
+                    <button type="button" class="btn btn-success fw-bold px-4" @onclick="GuardarRolesUsuario" disabled="@guardando">
+                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Guardar Roles
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (mostrarModalDetalleUsuario)
+{
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5);" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-eye-fill me-2"></i> Detalle del Usuario
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarDetalleUsuario"></button>
+                </div>
+                <div class="modal-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Usuario</dt>
+                        <dd class="col-sm-8">@usuarioSeleccionado?.Usuario</dd>
+
+                        <dt class="col-sm-4">Nombre</dt>
+                        <dd class="col-sm-8">@usuarioSeleccionado?.NombreCompleto</dd>
+
+                        <dt class="col-sm-4">Correo</dt>
+                        <dd class="col-sm-8">@usuarioSeleccionado?.Correo</dd>
+
+                        <dt class="col-sm-4">Estado</dt>
+                        <dd class="col-sm-8">
+                            @if (usuarioSeleccionado != null)
+                            {
+                                <span class="@ClaseEstado(usuarioSeleccionado.Activo)">@(usuarioSeleccionado.Activo ? "Activo" : "Inactivo")</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-4">Creacion</dt>
+                        <dd class="col-sm-8">@usuarioSeleccionado?.FechaCreacion.ToString("yyyy-MM-dd")</dd>
+
+                        <dt class="col-sm-4">Roles</dt>
+                        <dd class="col-sm-8">
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var rol in RolesOrdenados(usuarioSeleccionado?.Roles))
+                                {
+                                    <span class="badge bg-light text-dark border">@rol</span>
+                                }
+                                @if (!RolesOrdenados(usuarioSeleccionado?.Roles).Any())
+                                {
+                                    <span class="text-muted">Sin roles asignados.</span>
+                                }
+                            </div>
+                        </dd>
+                    </dl>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarDetalleUsuario">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<UsuarioModel> usuarios = new();
+    private List<RolModel> roles = new();
+    private string vistaActiva = "usuarios";
+    private string busquedaUsuarios = "";
+    private string busquedaRoles = "";
+    private bool incluirInactivos;
+    private bool cargando;
+    private bool guardando;
+    private string? mensajeError;
+    private string? mensajeExito;
+
+    private bool mostrarModalUsuario;
+    private bool editandoUsuario;
+    private int usuarioEditandoId;
+    private UsuarioUpdateModel usuarioForm = new();
+    private string passwordNuevoUsuario = "";
+
+    private bool mostrarModalRol;
+    private bool editandoRol;
+    private int rolEditandoId;
+    private RolRequestModel rolForm = new();
+
+    private bool mostrarModalPassword;
+    private string nuevaPassword = "";
+    private UsuarioModel? usuarioSeleccionado;
+
+    private bool mostrarModalRoles;
+    private HashSet<int> rolesSeleccionados = new();
+
+    private bool mostrarModalDetalleUsuario;
+
+    private IEnumerable<UsuarioModel> UsuariosFiltrados =>
+        string.IsNullOrWhiteSpace(busquedaUsuarios)
+            ? usuarios
+            : usuarios.Where(u =>
+                (u.Usuario?.Contains(busquedaUsuarios, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (u.NombreCompleto?.Contains(busquedaUsuarios, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (u.Correo?.Contains(busquedaUsuarios, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (u.Roles?.Contains(busquedaUsuarios, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    private IEnumerable<RolModel> RolesFiltrados =>
+        string.IsNullOrWhiteSpace(busquedaRoles)
+            ? roles
+            : roles.Where(r => r.NombreRol?.Contains(busquedaRoles, StringComparison.OrdinalIgnoreCase) ?? false);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        cargando = true;
+        mensajeError = null;
+
+        try
+        {
+            await CargarRoles();
+            await CargarUsuarios();
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CargarUsuarios()
+    {
+        try
+        {
+            mensajeError = null;
+            usuarios = await Http.GetFromJsonAsync<List<UsuarioModel>>($"api/usuarios?incluir_inactivos={incluirInactivos.ToString().ToLowerInvariant()}") ?? new();
+        }
+        catch (Exception ex)
+        {
+            usuarios = new();
+            mensajeError = $"Error al cargar usuarios: {ex.Message}. Verifica que FastAPI este corriendo y que el script SQL de administracion este aplicado.";
+        }
+    }
+
+    private async Task CargarRoles()
+    {
+        try
+        {
+            mensajeError = null;
+            roles = await Http.GetFromJsonAsync<List<RolModel>>("api/roles") ?? new();
+        }
+        catch (Exception ex)
+        {
+            roles = new();
+            mensajeError = $"Error al cargar roles: {ex.Message}. Verifica que FastAPI este corriendo y que el script SQL de administracion este aplicado.";
+        }
+    }
+
+    private void CambiarVista(string vista)
+    {
+        vistaActiva = vista;
+        mensajeError = null;
+        mensajeExito = null;
+    }
+
+    private void AbrirCrearUsuario()
+    {
+        editandoUsuario = false;
+        usuarioEditandoId = 0;
+        usuarioForm = new UsuarioUpdateModel { Activo = true };
+        passwordNuevoUsuario = "";
+        mostrarModalUsuario = true;
+    }
+
+    private void AbrirEditarUsuario(UsuarioModel usuario)
+    {
+        editandoUsuario = true;
+        usuarioEditandoId = usuario.UsuarioID;
+        usuarioForm = new UsuarioUpdateModel
+        {
+            Usuario = usuario.Usuario ?? "",
+            NombreCompleto = usuario.NombreCompleto ?? "",
+            Correo = usuario.Correo ?? "",
+            Activo = usuario.Activo
+        };
+        mostrarModalUsuario = true;
+    }
+
+    private void CerrarModalUsuario()
+    {
+        mostrarModalUsuario = false;
+    }
+
+    private async Task GuardarUsuario()
+    {
+        if (!ValidarUsuario())
+        {
+            return;
+        }
+
+        guardando = true;
+        mensajeError = null;
+        mensajeExito = null;
+
+        try
+        {
+            HttpResponseMessage respuesta;
+            if (editandoUsuario)
+            {
+                respuesta = await Http.PutAsJsonAsync($"api/usuarios/{usuarioEditandoId}", usuarioForm);
+            }
+            else
+            {
+                var nuevoUsuario = new UsuarioCreateModel
+                {
+                    Usuario = usuarioForm.Usuario,
+                    Password = passwordNuevoUsuario,
+                    NombreCompleto = usuarioForm.NombreCompleto,
+                    Correo = usuarioForm.Correo,
+                    Activo = usuarioForm.Activo
+                };
+                respuesta = await Http.PostAsJsonAsync("api/usuarios", nuevoUsuario);
+            }
+
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensajeExito = editandoUsuario ? "Usuario actualizado correctamente." : "Usuario creado correctamente.";
+                mostrarModalUsuario = false;
+                await CargarUsuarios();
+            }
+            else
+            {
+                mensajeError = await LeerError(respuesta);
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al guardar usuario: {ex.Message}";
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private bool ValidarUsuario()
+    {
+        if (string.IsNullOrWhiteSpace(usuarioForm.Usuario) || string.IsNullOrWhiteSpace(usuarioForm.NombreCompleto) || string.IsNullOrWhiteSpace(usuarioForm.Correo))
+        {
+            mensajeError = "Usuario, nombre completo y correo son obligatorios.";
+            return false;
+        }
+
+        if (!editandoUsuario && passwordNuevoUsuario.Length < 8)
+        {
+            mensajeError = "La contrasena debe tener al menos 8 caracteres.";
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task ConfirmarEliminarUsuario(UsuarioModel usuario, string accion)
+    {
+        var accionNormalizada = accion.Equals("eliminar", StringComparison.OrdinalIgnoreCase) ? "eliminar" : "desactivar";
+        bool confirmado = await JS.InvokeAsync<bool>("confirm", $"Desea {accionNormalizada} el usuario {usuario.Usuario}?");
+        if (!confirmado)
+        {
+            return;
+        }
+
+        try
+        {
+            var respuesta = await Http.DeleteAsync($"api/usuarios/{usuario.UsuarioID}");
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensajeExito = accionNormalizada == "eliminar"
+                    ? "Usuario eliminado correctamente."
+                    : "Usuario desactivado correctamente.";
+                await CargarUsuarios();
+            }
+            else
+            {
+                mensajeError = await LeerError(respuesta);
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al {accionNormalizada} usuario: {ex.Message}";
+        }
+    }
+
+    private void AbrirReiniciarPassword(UsuarioModel usuario)
+    {
+        usuarioSeleccionado = usuario;
+        nuevaPassword = "";
+        mostrarModalPassword = true;
+    }
+
+    private void CerrarModalPassword()
+    {
+        mostrarModalPassword = false;
+    }
+
+    private async Task ReiniciarPassword()
+    {
+        if (usuarioSeleccionado == null)
+        {
+            return;
+        }
+
+        if (nuevaPassword.Length < 8)
+        {
+            mensajeError = "La nueva contrasena debe tener al menos 8 caracteres.";
+            return;
+        }
+
+        guardando = true;
+        try
+        {
+            var solicitud = new ReiniciarPasswordModel
+            {
+                UsuarioID = usuarioSeleccionado.UsuarioID,
+                NuevaPassword = nuevaPassword
+            };
+            var respuesta = await Http.PostAsJsonAsync("api/usuarios/reiniciar-password", solicitud);
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensajeExito = "Contrasena reiniciada correctamente.";
+                mostrarModalPassword = false;
+            }
+            else
+            {
+                mensajeError = await LeerError(respuesta);
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al reiniciar contrasena: {ex.Message}";
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private void AbrirAsignarRoles(UsuarioModel usuario)
+    {
+        usuarioSeleccionado = usuario;
+        rolesSeleccionados = ParsearRolesUsuario(usuario.Roles);
+        mostrarModalRoles = true;
+    }
+
+    private void CerrarModalRoles()
+    {
+        mostrarModalRoles = false;
+    }
+
+    private void AbrirDetalleUsuario(UsuarioModel usuario)
+    {
+        usuarioSeleccionado = usuario;
+        mostrarModalDetalleUsuario = true;
+    }
+
+    private void CerrarDetalleUsuario()
+    {
+        mostrarModalDetalleUsuario = false;
+    }
+
+    private async Task GuardarRolesUsuario()
+    {
+        if (usuarioSeleccionado == null)
+        {
+            return;
+        }
+
+        guardando = true;
+        try
+        {
+            var solicitud = new AsignarRolesModel
+            {
+                UsuarioID = usuarioSeleccionado.UsuarioID,
+                RolesID = rolesSeleccionados.OrderBy(id => id).ToList()
+            };
+            var respuesta = await Http.PostAsJsonAsync("api/usuarios/asignar-roles", solicitud);
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensajeExito = "Roles asignados correctamente.";
+                mostrarModalRoles = false;
+                await CargarUsuarios();
+            }
+            else
+            {
+                mensajeError = await LeerError(respuesta);
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al asignar roles: {ex.Message}";
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private void CambiarRolSeleccionado(int rolId, ChangeEventArgs args)
+    {
+        bool seleccionado = args.Value is bool valor && valor;
+        if (seleccionado)
+        {
+            rolesSeleccionados.Add(rolId);
+        }
+        else
+        {
+            rolesSeleccionados.Remove(rolId);
+        }
+    }
+
+    private HashSet<int> ParsearRolesUsuario(string? rolesTexto)
+    {
+        if (string.IsNullOrWhiteSpace(rolesTexto))
+        {
+            return new HashSet<int>();
+        }
+
+        var nombres = rolesTexto.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var ids = roles
+            .Where(rol => nombres.Contains(rol.NombreRol ?? "", StringComparer.OrdinalIgnoreCase))
+            .Select(rol => rol.RolID);
+
+        return new HashSet<int>(ids);
+    }
+
+    private void AbrirCrearRol()
+    {
+        editandoRol = false;
+        rolEditandoId = 0;
+        rolForm = new RolRequestModel();
+        mostrarModalRol = true;
+    }
+
+    private void AbrirEditarRol(RolModel rol)
+    {
+        editandoRol = true;
+        rolEditandoId = rol.RolID;
+        rolForm = new RolRequestModel { NombreRol = rol.NombreRol ?? "" };
+        mostrarModalRol = true;
+    }
+
+    private void CerrarModalRol()
+    {
+        mostrarModalRol = false;
+    }
+
+    private async Task GuardarRol()
+    {
+        if (string.IsNullOrWhiteSpace(rolForm.NombreRol))
+        {
+            mensajeError = "El nombre del rol es obligatorio.";
+            return;
+        }
+
+        guardando = true;
+        mensajeError = null;
+        mensajeExito = null;
+
+        try
+        {
+            var respuesta = editandoRol
+                ? await Http.PutAsJsonAsync($"api/roles/{rolEditandoId}", rolForm)
+                : await Http.PostAsJsonAsync("api/roles", rolForm);
+
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensajeExito = editandoRol ? "Rol actualizado correctamente." : "Rol creado correctamente.";
+                mostrarModalRol = false;
+                await CargarRoles();
+                await CargarUsuarios();
+            }
+            else
+            {
+                mensajeError = await LeerError(respuesta);
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al guardar rol: {ex.Message}";
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private async Task ConfirmarEliminarRol(RolModel rol)
+    {
+        bool confirmado = await JS.InvokeAsync<bool>("confirm", $"Desea eliminar el rol {rol.NombreRol}?");
+        if (!confirmado)
+        {
+            return;
+        }
+
+        try
+        {
+            var respuesta = await Http.DeleteAsync($"api/roles/{rol.RolID}");
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensajeExito = "Rol eliminado correctamente.";
+                await CargarRoles();
+                await CargarUsuarios();
+            }
+            else
+            {
+                mensajeError = await LeerError(respuesta);
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al eliminar rol: {ex.Message}";
+        }
+    }
+
+    private static IReadOnlyList<string> RolesResumen(string? rolesTexto)
+    {
+        return RolesOrdenados(rolesTexto).Take(2).ToList();
+    }
+
+    private static int CantidadRolesOcultos(string? rolesTexto)
+    {
+        return Math.Max(0, RolesOrdenados(rolesTexto).Count - 2);
+    }
+
+    private static IReadOnlyList<string> RolesOrdenados(string? rolesTexto)
+    {
+        if (string.IsNullOrWhiteSpace(rolesTexto))
+        {
+            return Array.Empty<string>();
+        }
+
+        return rolesTexto
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(EsRolAdministrador)
+            .ThenBy(rol => rol, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static bool EsRolAdministrador(string rol)
+    {
+        return rol.Equals("admin", StringComparison.OrdinalIgnoreCase)
+            || rol.Equals("administrador", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string ClaseEstado(bool activo)
+    {
+        return activo ? "badge bg-success" : "badge bg-secondary";
+    }
+
+    private string ClaseTab(string nombre)
+    {
+        return vistaActiva == nombre ? "nav-link active fw-bold" : "nav-link";
+    }
+
+    private static async Task<string> LeerError(HttpResponseMessage respuesta)
+    {
+        var contenido = await respuesta.Content.ReadAsStringAsync();
+        return string.IsNullOrWhiteSpace(contenido)
+            ? $"Error HTTP {(int)respuesta.StatusCode}"
+            : contenido;
+    }
+}

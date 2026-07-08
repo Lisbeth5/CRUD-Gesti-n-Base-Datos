@@ -1,0 +1,591 @@
+@page "/reportes/ventas"
+@using System.Globalization
+@using frontend_blazor.Client.Models
+@inject HttpClient Http
+@rendermode InteractiveWebAssembly
+
+<div class="container-fluid mt-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <h2 class="text-primary fw-bold mb-0">
+            <i class="bi bi-file-earmark-bar-graph-fill me-2"></i> Reportes de Ventas
+        </h2>
+        <button class="btn btn-primary fw-bold shadow-sm" @onclick="CargarReporteActual" disabled="@cargando">
+            <i class="bi bi-arrow-clockwise me-1"></i> Actualizar
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensajeError))
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @mensajeError
+            <button type="button" class="btn-close" @onclick="() => mensajeError = null"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body bg-light">
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-md-3 col-xl-2">
+                    <label class="form-label fw-semibold">Fecha Inicial</label>
+                    <input type="date" class="form-control" @bind="fechaInicial" @bind:format="yyyy-MM-dd" />
+                </div>
+                <div class="col-12 col-md-3 col-xl-2">
+                    <label class="form-label fw-semibold">Fecha Final</label>
+                    <input type="date" class="form-control" @bind="fechaFinal" @bind:format="yyyy-MM-dd" />
+                </div>
+
+                @if (reporteActivo == "detalle" || reporteActivo == "resumen")
+                {
+                    <div class="col-12 col-md-3 col-xl-2">
+                        <label class="form-label fw-semibold">ID Cliente</label>
+                        <input type="number" class="form-control" @bind="clienteId" min="1" />
+                    </div>
+                    <div class="col-12 col-md-3 col-xl-2">
+                        <label class="form-label fw-semibold">ID Vendedor</label>
+                        <input type="number" class="form-control" @bind="vendedorId" min="1" />
+                    </div>
+                }
+
+                @if (reporteActivo == "productos")
+                {
+                    <div class="col-12 col-md-3 col-xl-2">
+                        <label class="form-label fw-semibold">ID Producto</label>
+                        <input type="number" class="form-control" @bind="productoId" min="1" />
+                    </div>
+                }
+
+                @if (reporteActivo == "categorias")
+                {
+                    <div class="col-12 col-md-3 col-xl-2">
+                        <label class="form-label fw-semibold">ID Categoria</label>
+                        <input type="number" class="form-control" @bind="categoriaId" min="1" />
+                    </div>
+                }
+
+                @if (reporteActivo == "territorios")
+                {
+                    <div class="col-12 col-md-3 col-xl-2">
+                        <label class="form-label fw-semibold">ID Territorio</label>
+                        <input type="number" class="form-control" @bind="territorioId" min="1" />
+                    </div>
+                }
+
+                <div class="col-12 col-md-auto">
+                    <button class="btn btn-success fw-bold px-4" @onclick="AplicarFiltros" disabled="@cargando">
+                        <i class="bi bi-search me-1"></i> Consultar
+                    </button>
+                </div>
+                <div class="col-12 col-md-auto">
+                    <button class="btn btn-outline-secondary" @onclick="LimpiarFiltros" disabled="@cargando">
+                        <i class="bi bi-eraser-fill me-1"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <button class='@ClaseTab("detalle")' @onclick='() => CambiarReporte("detalle")'>Detalle</button>
+        </li>
+        <li class="nav-item">
+            <button class='@ClaseTab("resumen")' @onclick='() => CambiarReporte("resumen")'>Resumen</button>
+        </li>
+        <li class="nav-item">
+            <button class='@ClaseTab("productos")' @onclick='() => CambiarReporte("productos")'>Productos</button>
+        </li>
+        <li class="nav-item">
+            <button class='@ClaseTab("categorias")' @onclick='() => CambiarReporte("categorias")'>Categorias</button>
+        </li>
+        <li class="nav-item">
+            <button class='@ClaseTab("territorios")' @onclick='() => CambiarReporte("territorios")'>Territorios</button>
+        </li>
+    </ul>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <span class="fw-bold text-secondary">@TituloReporteActivo</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted small">Filas</span>
+                <select class="form-select form-select-sm" style="width: 84px;" value="@pageSize" @onchange="CambiarTamanoPagina">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            @if (cargando)
+            {
+                <div class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted">Cargando reporte desde la API de Python...</p>
+                </div>
+            }
+            else if (TotalRegistros == 0)
+            {
+                <div class="alert alert-warning m-3 text-center">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> No se encontraron registros para los filtros seleccionados.
+                </div>
+            }
+            else
+            {
+                @if (reporteActivo == "detalle")
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="ps-3">@CabeceraOrden("Fecha", "Fecha")</th>
+                                    <th>@CabeceraOrden("NumeroOrden", "Orden")</th>
+                                    <th>@CabeceraOrden("Cliente", "Cliente")</th>
+                                    <th>@CabeceraOrden("Vendedor", "Vendedor")</th>
+                                    <th>@CabeceraOrden("Producto", "Producto")</th>
+                                    <th class="text-end">@CabeceraOrden("Cantidad", "Cantidad")</th>
+                                    <th class="text-end">@CabeceraOrden("PrecioUnitario", "Precio Unitario")</th>
+                                    <th class="text-end pe-3">@CabeceraOrden("TotalLinea", "Total Linea")</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in DetallePagina)
+                                {
+                                    <tr>
+                                        <td class="ps-3">@item.Fecha.ToString("yyyy-MM-dd")</td>
+                                        <td><span class="badge bg-light text-dark border">@item.NumeroOrden</span></td>
+                                        <td>@item.Cliente</td>
+                                        <td>@item.Vendedor</td>
+                                        <td>@item.Producto</td>
+                                        <td class="text-end">@item.Cantidad</td>
+                                        <td class="text-end">@item.PrecioUnitario.ToString("C2", cultura)</td>
+                                        <td class="text-end pe-3 fw-semibold">@item.TotalLinea.ToString("C2", cultura)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else if (reporteActivo == "resumen")
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="ps-3">@CabeceraOrden("Cliente", "Cliente")</th>
+                                    <th>@CabeceraOrden("Vendedor", "Vendedor")</th>
+                                    <th class="text-end">@CabeceraOrden("NumeroPedidos", "Pedidos")</th>
+                                    <th class="text-end pe-3">@CabeceraOrden("TotalVendido", "Total Vendido")</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in ResumenPagina)
+                                {
+                                    <tr>
+                                        <td class="ps-3">@item.Cliente</td>
+                                        <td>@item.Vendedor</td>
+                                        <td class="text-end">@item.NumeroPedidos</td>
+                                        <td class="text-end pe-3 fw-semibold">@item.TotalVendido.ToString("C2", cultura)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else if (reporteActivo == "productos")
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="ps-3">@CabeceraOrden("Producto", "Producto")</th>
+                                    <th class="text-end">@CabeceraOrden("CantidadVendida", "Cantidad Vendida")</th>
+                                    <th class="text-end pe-3">@CabeceraOrden("TotalVendido", "Total Vendido")</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in ProductosPagina)
+                                {
+                                    <tr>
+                                        <td class="ps-3">@item.Producto</td>
+                                        <td class="text-end">@item.CantidadVendida</td>
+                                        <td class="text-end pe-3 fw-semibold">@item.TotalVendido.ToString("C2", cultura)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else if (reporteActivo == "categorias")
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="ps-3">@CabeceraOrden("Categoria", "Categoria")</th>
+                                    <th class="text-end">@CabeceraOrden("CantidadVendida", "Cantidad Vendida")</th>
+                                    <th class="text-end pe-3">@CabeceraOrden("TotalVendido", "Total Vendido")</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in CategoriasPagina)
+                                {
+                                    <tr>
+                                        <td class="ps-3">@item.Categoria</td>
+                                        <td class="text-end">@item.CantidadVendida</td>
+                                        <td class="text-end pe-3 fw-semibold">@item.TotalVendido.ToString("C2", cultura)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else if (reporteActivo == "territorios")
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="ps-3">@CabeceraOrden("Territorio", "Territorio")</th>
+                                    <th>@CabeceraOrden("Categoria", "Categoria")</th>
+                                    <th>@CabeceraOrden("Producto", "Producto")</th>
+                                    <th class="text-end">@CabeceraOrden("Cantidad", "Cantidad")</th>
+                                    <th class="text-end pe-3">@CabeceraOrden("TotalVendido", "Total Vendido")</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in TerritoriosPagina)
+                                {
+                                    <tr>
+                                        <td class="ps-3">@item.Territorio</td>
+                                        <td>@item.Categoria</td>
+                                        <td>@item.Producto</td>
+                                        <td class="text-end">@item.Cantidad</td>
+                                        <td class="text-end pe-3 fw-semibold">@item.TotalVendido.ToString("C2", cultura)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+        </div>
+
+        @if (!cargando && TotalRegistros > 0)
+        {
+            <div class="card-footer bg-white d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <span class="text-muted small">
+                    Pagina @paginaActual de @TotalPaginas | @TotalRegistros registros
+                </span>
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary btn-sm" @onclick="PaginaAnterior" disabled="@(paginaActual == 1)">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" @onclick="PaginaSiguiente" disabled="@(paginaActual == TotalPaginas)">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private readonly CultureInfo cultura = new("en-US");
+
+    private string reporteActivo = "detalle";
+    private string columnaOrden = "Fecha";
+    private bool ordenAscendente = false;
+    private bool cargando;
+    private string? mensajeError;
+
+    private DateTime? fechaInicial;
+    private DateTime? fechaFinal;
+    private int? clienteId;
+    private int? vendedorId;
+    private int? productoId;
+    private int? categoriaId;
+    private int? territorioId;
+
+    private int paginaActual = 1;
+    private int pageSize = 10;
+
+    private List<DetalleVentaModel> detalleVentas = new();
+    private List<ResumenVentaModel> resumenVentas = new();
+    private List<VentaProductoModel> ventasProductos = new();
+    private List<VentaCategoriaModel> ventasCategorias = new();
+    private List<VentaTerritorioModel> ventasTerritorios = new();
+
+    private string TituloReporteActivo => reporteActivo switch
+    {
+        "detalle" => "Detalle de Ventas",
+        "resumen" => "Resumen de Ventas",
+        "productos" => "Ventas por Producto",
+        "categorias" => "Ventas por Categoria",
+        "territorios" => "Ventas por Territorio",
+        _ => "Reportes de Ventas"
+    };
+
+    private int TotalRegistros => reporteActivo switch
+    {
+        "detalle" => detalleVentas.Count,
+        "resumen" => resumenVentas.Count,
+        "productos" => ventasProductos.Count,
+        "categorias" => ventasCategorias.Count,
+        "territorios" => ventasTerritorios.Count,
+        _ => 0
+    };
+
+    private int TotalPaginas => Math.Max(1, (int)Math.Ceiling(TotalRegistros / (double)pageSize));
+
+    private IEnumerable<DetalleVentaModel> DetallePagina => Paginar(Ordenar(detalleVentas, SelectorDetalle));
+    private IEnumerable<ResumenVentaModel> ResumenPagina => Paginar(Ordenar(resumenVentas, SelectorResumen));
+    private IEnumerable<VentaProductoModel> ProductosPagina => Paginar(Ordenar(ventasProductos, SelectorProducto));
+    private IEnumerable<VentaCategoriaModel> CategoriasPagina => Paginar(Ordenar(ventasCategorias, SelectorCategoria));
+    private IEnumerable<VentaTerritorioModel> TerritoriosPagina => Paginar(Ordenar(ventasTerritorios, SelectorTerritorio));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarReporteActual();
+    }
+
+    private async Task CargarReporteActual()
+    {
+        cargando = true;
+        mensajeError = null;
+
+        try
+        {
+            if (fechaInicial.HasValue && fechaFinal.HasValue && fechaInicial.Value.Date > fechaFinal.Value.Date)
+            {
+                mensajeError = "La fecha inicial no puede ser mayor que la fecha final.";
+                return;
+            }
+
+            // Cada reporte consume su endpoint REST; Blazor no conoce detalles SQL.
+            switch (reporteActivo)
+            {
+                case "detalle":
+                    detalleVentas = await Http.GetFromJsonAsync<List<DetalleVentaModel>>(ConstruirUrl("api/reportes/detalle-ventas")) ?? new();
+                    columnaOrden = string.IsNullOrWhiteSpace(columnaOrden) ? "Fecha" : columnaOrden;
+                    break;
+                case "resumen":
+                    resumenVentas = await Http.GetFromJsonAsync<List<ResumenVentaModel>>(ConstruirUrl("api/reportes/resumen-ventas")) ?? new();
+                    columnaOrden = string.IsNullOrWhiteSpace(columnaOrden) ? "TotalVendido" : columnaOrden;
+                    break;
+                case "productos":
+                    ventasProductos = await Http.GetFromJsonAsync<List<VentaProductoModel>>(ConstruirUrl("api/reportes/productos")) ?? new();
+                    columnaOrden = string.IsNullOrWhiteSpace(columnaOrden) ? "TotalVendido" : columnaOrden;
+                    break;
+                case "categorias":
+                    ventasCategorias = await Http.GetFromJsonAsync<List<VentaCategoriaModel>>(ConstruirUrl("api/reportes/categorias")) ?? new();
+                    columnaOrden = string.IsNullOrWhiteSpace(columnaOrden) ? "TotalVendido" : columnaOrden;
+                    break;
+                case "territorios":
+                    ventasTerritorios = await Http.GetFromJsonAsync<List<VentaTerritorioModel>>(ConstruirUrl("api/reportes/territorios")) ?? new();
+                    columnaOrden = string.IsNullOrWhiteSpace(columnaOrden) ? "TotalVendido" : columnaOrden;
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al consultar reportes: {ex.Message}. Verifica que FastAPI este corriendo y que los procedimientos almacenados existan.";
+        }
+        finally
+        {
+            paginaActual = Math.Min(paginaActual, TotalPaginas);
+            cargando = false;
+        }
+    }
+
+    private async Task AplicarFiltros()
+    {
+        paginaActual = 1;
+        await CargarReporteActual();
+    }
+
+    private async Task CambiarReporte(string nuevoReporte)
+    {
+        reporteActivo = nuevoReporte;
+        paginaActual = 1;
+        ordenAscendente = nuevoReporte is not "detalle";
+        columnaOrden = nuevoReporte switch
+        {
+            "detalle" => "Fecha",
+            "resumen" => "TotalVendido",
+            "productos" => "TotalVendido",
+            "categorias" => "TotalVendido",
+            "territorios" => "TotalVendido",
+            _ => ""
+        };
+
+        await CargarReporteActual();
+    }
+
+    private async Task LimpiarFiltros()
+    {
+        fechaInicial = null;
+        fechaFinal = null;
+        clienteId = null;
+        vendedorId = null;
+        productoId = null;
+        categoriaId = null;
+        territorioId = null;
+        paginaActual = 1;
+
+        await CargarReporteActual();
+    }
+
+    private string ConstruirUrl(string ruta)
+    {
+        var parametros = new List<string>();
+
+        AgregarParametroFecha(parametros, "fecha_inicial", fechaInicial);
+        AgregarParametroFecha(parametros, "fecha_final", fechaFinal);
+
+        if (reporteActivo == "detalle" || reporteActivo == "resumen")
+        {
+            AgregarParametroEntero(parametros, "cliente_id", clienteId);
+            AgregarParametroEntero(parametros, "vendedor_id", vendedorId);
+        }
+        else if (reporteActivo == "productos")
+        {
+            AgregarParametroEntero(parametros, "producto_id", productoId);
+        }
+        else if (reporteActivo == "categorias")
+        {
+            AgregarParametroEntero(parametros, "categoria_id", categoriaId);
+        }
+        else if (reporteActivo == "territorios")
+        {
+            AgregarParametroEntero(parametros, "territorio_id", territorioId);
+        }
+
+        return parametros.Count == 0 ? ruta : $"{ruta}?{string.Join("&", parametros)}";
+    }
+
+    private static void AgregarParametroFecha(List<string> parametros, string nombre, DateTime? valor)
+    {
+        if (valor.HasValue)
+        {
+            parametros.Add($"{nombre}={valor.Value:yyyy-MM-dd}");
+        }
+    }
+
+    private static void AgregarParametroEntero(List<string> parametros, string nombre, int? valor)
+    {
+        if (valor.HasValue)
+        {
+            parametros.Add($"{nombre}={valor.Value}");
+        }
+    }
+
+    private RenderFragment CabeceraOrden(string columna, string texto) => builder =>
+    {
+        builder.OpenElement(0, "button");
+        builder.AddAttribute(1, "type", "button");
+        builder.AddAttribute(2, "class", "btn btn-link text-white text-decoration-none p-0 fw-bold");
+        builder.AddAttribute(3, "onclick", EventCallback.Factory.Create(this, () => OrdenarPor(columna)));
+        builder.AddContent(4, texto);
+        if (columnaOrden == columna)
+        {
+            builder.AddContent(5, ordenAscendente ? " ^" : " v");
+        }
+        builder.CloseElement();
+    };
+
+    private void OrdenarPor(string columna)
+    {
+        if (columnaOrden == columna)
+        {
+            ordenAscendente = !ordenAscendente;
+        }
+        else
+        {
+            columnaOrden = columna;
+            ordenAscendente = true;
+        }
+
+        paginaActual = 1;
+    }
+
+    private IEnumerable<T> Ordenar<T>(IEnumerable<T> datos, Func<T, object?> selector)
+    {
+        return ordenAscendente ? datos.OrderBy(selector) : datos.OrderByDescending(selector);
+    }
+
+    private IEnumerable<T> Paginar<T>(IEnumerable<T> datos)
+    {
+        return datos.Skip((paginaActual - 1) * pageSize).Take(pageSize);
+    }
+
+    private object? SelectorDetalle(DetalleVentaModel item) => columnaOrden switch
+    {
+        "Fecha" => item.Fecha,
+        "NumeroOrden" => item.NumeroOrden,
+        "Cliente" => item.Cliente,
+        "Vendedor" => item.Vendedor,
+        "Producto" => item.Producto,
+        "Cantidad" => item.Cantidad,
+        "PrecioUnitario" => item.PrecioUnitario,
+        "TotalLinea" => item.TotalLinea,
+        _ => item.Fecha
+    };
+
+    private object? SelectorResumen(ResumenVentaModel item) => columnaOrden switch
+    {
+        "Cliente" => item.Cliente,
+        "Vendedor" => item.Vendedor,
+        "NumeroPedidos" => item.NumeroPedidos,
+        "TotalVendido" => item.TotalVendido,
+        _ => item.TotalVendido
+    };
+
+    private object? SelectorProducto(VentaProductoModel item) => columnaOrden switch
+    {
+        "Producto" => item.Producto,
+        "CantidadVendida" => item.CantidadVendida,
+        "TotalVendido" => item.TotalVendido,
+        _ => item.TotalVendido
+    };
+
+    private object? SelectorCategoria(VentaCategoriaModel item) => columnaOrden switch
+    {
+        "Categoria" => item.Categoria,
+        "CantidadVendida" => item.CantidadVendida,
+        "TotalVendido" => item.TotalVendido,
+        _ => item.TotalVendido
+    };
+
+    private object? SelectorTerritorio(VentaTerritorioModel item) => columnaOrden switch
+    {
+        "Territorio" => item.Territorio,
+        "Categoria" => item.Categoria,
+        "Producto" => item.Producto,
+        "Cantidad" => item.Cantidad,
+        "TotalVendido" => item.TotalVendido,
+        _ => item.TotalVendido
+    };
+
+    private string ClaseTab(string nombre)
+    {
+        return reporteActivo == nombre ? "nav-link active fw-bold" : "nav-link";
+    }
+
+    private void CambiarTamanoPagina(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out var nuevoTamano))
+        {
+            pageSize = nuevoTamano;
+            paginaActual = 1;
+        }
+    }
+
+    private void PaginaAnterior()
+    {
+        paginaActual = Math.Max(1, paginaActual - 1);
+    }
+
+    private void PaginaSiguiente()
+    {
+        paginaActual = Math.Min(TotalPaginas, paginaActual + 1);
+    }
+}

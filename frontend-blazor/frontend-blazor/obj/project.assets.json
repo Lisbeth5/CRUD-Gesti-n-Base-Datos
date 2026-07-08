@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "targets": {
     "net8.0": {
       "Microsoft.AspNetCore.Authorization/8.0.28": {
@@ -1179,19 +1179,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\ASUS\\.nuget\\packages\\": {}
+    "C:\\Users\\ramse\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\ASUS\\Documents\\CRUD-S.G.B.D\\frontend-blazor\\frontend-blazor\\frontend-blazor.csproj",
+      "projectUniqueName": "C:\\Users\\ramse\\OneDrive\\Escritorio\\proyecto\\Version con Python\\CRUD-Gesti-n-Base-Datos\\frontend-blazor\\frontend-blazor\\frontend-blazor.csproj",
       "projectName": "frontend-blazor",
-      "projectPath": "C:\\Users\\ASUS\\Documents\\CRUD-S.G.B.D\\frontend-blazor\\frontend-blazor\\frontend-blazor.csproj",
-      "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\ASUS\\Documents\\CRUD-S.G.B.D\\frontend-blazor\\frontend-blazor\\obj\\",
+      "projectPath": "C:\\Users\\ramse\\OneDrive\\Escritorio\\proyecto\\Version con Python\\CRUD-Gesti-n-Base-Datos\\frontend-blazor\\frontend-blazor\\frontend-blazor.csproj",
+      "packagesPath": "C:\\Users\\ramse\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\ramse\\OneDrive\\Escritorio\\proyecto\\Version con Python\\CRUD-Gesti-n-Base-Datos\\frontend-blazor\\frontend-blazor\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\ASUS\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\ramse\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -1201,10 +1201,11 @@
       },
       "frameworks": {
         "net8.0": {
+          "framework": "net8.0",
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\ASUS\\Documents\\CRUD-S.G.B.D\\frontend-blazor\\frontend-blazor.Client\\frontend-blazor.Client.csproj": {
-              "projectPath": "C:\\Users\\ASUS\\Documents\\CRUD-S.G.B.D\\frontend-blazor\\frontend-blazor.Client\\frontend-blazor.Client.csproj"
+            "C:\\Users\\ramse\\OneDrive\\Escritorio\\proyecto\\Version con Python\\CRUD-Gesti-n-Base-Datos\\frontend-blazor\\frontend-blazor.Client\\frontend-blazor.Client.csproj": {
+              "projectPath": "C:\\Users\\ramse\\OneDrive\\Escritorio\\proyecto\\Version con Python\\CRUD-Gesti-n-Base-Datos\\frontend-blazor\\frontend-blazor.Client\\frontend-blazor.Client.csproj"
             }
           }
         }
@@ -1218,10 +1219,12 @@
         "enableAudit": "true",
         "auditLevel": "low",
         "auditMode": "direct"
-      }
+      },
+      "SdkAnalysisLevel": "10.0.300"
     },
     "frameworks": {
       "net8.0": {
+        "framework": "net8.0",
         "targetAlias": "net8.0",
         "dependencies": {
           "Microsoft.AspNetCore.Components.WebAssembly.Server": {
@@ -1240,6 +1243,24 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.AspNetCore.App.Ref",
+            "version": "[8.0.28, 8.0.28]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Host.win-x64",
+            "version": "[8.0.28, 8.0.28]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Ref",
+            "version": "[8.0.28, 8.0.28]"
+          },
+          {
+            "name": "Microsoft.WindowsDesktop.App.Ref",
+            "version": "[8.0.28, 8.0.28]"
+          }
+        ],
         "frameworkReferences": {
           "Microsoft.AspNetCore.App": {
             "privateAssets": "none"
@@ -1248,7 +1269,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.422/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
