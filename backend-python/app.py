@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from routers import administracion, clientes, reportes
+from routers import administracion, clientes, reportes, territorios, ventas
 from utils.exceptions import AppError
 
 
@@ -35,6 +35,8 @@ def create_app() -> FastAPI:
     app.include_router(reportes.router)
     app.include_router(administracion.usuarios_router)
     app.include_router(administracion.roles_router)
+    app.include_router(territorios.router)
+    app.include_router(ventas.router)
     return app
 
 
