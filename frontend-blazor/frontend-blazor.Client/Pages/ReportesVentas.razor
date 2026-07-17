@@ -2,6 +2,7 @@
 @using System.Globalization
 @using frontend_blazor.Client.Models
 @inject HttpClient Http
+@inject IJSRuntime JS
 @rendermode InteractiveWebAssembly
 
 <div class="container-fluid mt-4">
@@ -9,9 +10,14 @@
         <h2 class="text-primary fw-bold mb-0">
             <i class="bi bi-file-earmark-bar-graph-fill me-2"></i> Reportes de Ventas
         </h2>
-        <button class="btn btn-primary fw-bold shadow-sm" @onclick="CargarReporteActual" disabled="@cargando">
-            <i class="bi bi-arrow-clockwise me-1"></i> Actualizar
-        </button>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary fw-bold shadow-sm" @onclick="CargarReporteActual" disabled="@cargando">
+                <i class="bi bi-arrow-clockwise me-1"></i> Actualizar
+            </button>
+            <button class="btn btn-outline-danger fw-bold shadow-sm" @onclick="ExportarPdf" disabled="@cargando">
+                <i class="bi bi-file-earmark-pdf-fill me-1"></i> Exportar PDF
+            </button>
+        </div>
     </div>
 
     @if (!string.IsNullOrEmpty(mensajeError))
@@ -402,6 +408,19 @@
         await CargarReporteActual();
     }
 
+    private async Task ExportarPdf()
+    {
+        mensajeError = null;
+        if (fechaInicial.HasValue && fechaFinal.HasValue && fechaInicial.Value.Date > fechaFinal.Value.Date)
+        {
+            mensajeError = "La fecha inicial no puede ser mayor que la fecha final.";
+            return;
+        }
+
+        var url = ConstruirUrl("api/reportes/exportar-pdf", $"tipo={reporteActivo}");
+        await JS.InvokeVoidAsync("open", new Uri(Http.BaseAddress!, url).ToString(), "_blank");
+    }
+
     private async Task CambiarReporte(string nuevoReporte)
     {
         reporteActivo = nuevoReporte;
@@ -434,9 +453,9 @@
         await CargarReporteActual();
     }
 
-    private string ConstruirUrl(string ruta)
+    private string ConstruirUrl(string ruta, params string[] parametrosIniciales)
     {
-        var parametros = new List<string>();
+        var parametros = parametrosIniciales.ToList();
 
         AgregarParametroFecha(parametros, "fecha_inicial", fechaInicial);
         AgregarParametroFecha(parametros, "fecha_final", fechaFinal);

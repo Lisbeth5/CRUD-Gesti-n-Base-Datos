@@ -2059,6 +2059,6 @@ C:\Users\ramse\OneDrive\Escritorio\proyecto\Version con Python\CRUD-Gesti-n-Base
 C:\Users\ramse\OneDrive\Escritorio\proyecto\Version con Python\CRUD-Gesti-n-Base-Datos\frontend-blazor\frontend-blazor.Client\obj\Debug\net8.0\swae.build.ex.cache
 C:\Users\ramse\OneDrive\Escritorio\proyecto\Version con Python\CRUD-Gesti-n-Base-Datos\frontend-blazor\frontend-blazor.Client\obj\Debug\net8.0\frontend.932E07F7.Up2Date
 C:\Users\ramse\OneDrive\Escritorio\proyecto\Version con Python\CRUD-Gesti-n-Base-Datos\frontend-blazor\frontend-blazor.Client\obj\Debug\net8.0\ref\frontend-blazor.Client.dll
-C:\Users\ramse\OneDrive\Escritorio\proyecto\Version con Python\CRUD-Gesti-n-Base-Datos\frontend-blazor\frontend-blazor.Client\obj\Debug\net8.0\compressed\q2nubw52yi-{0}-jdopr3ju48-jdopr3ju48.gz
-C:\Users\ramse\OneDrive\Escritorio\proyecto\Version con Python\CRUD-Gesti-n-Base-Datos\frontend-blazor\frontend-blazor.Client\obj\Debug\net8.0\compressed\yqtruyd7cl-{0}-5xn0e16w9b-5xn0e16w9b.gz
-C:\Users\ramse\OneDrive\Escritorio\proyecto\Version con Python\CRUD-Gesti-n-Base-Datos\frontend-blazor\frontend-blazor.Client\obj\Debug\net8.0\compressed\9jhqaqoxrl-{0}-ufqg033ylx-ufqg033ylx.gz
+C:\Users\ramse\OneDrive\Escritorio\proyecto\Version con Python\CRUD-Gesti-n-Base-Datos\frontend-blazor\frontend-blazor.Client\obj\Debug\net8.0\compressed\q2nubw52yi-{0}-m69uuxylgf-m69uuxylgf.gz
+C:\Users\ramse\OneDrive\Escritorio\proyecto\Version con Python\CRUD-Gesti-n-Base-Datos\frontend-blazor\frontend-blazor.Client\obj\Debug\net8.0\compressed\yqtruyd7cl-{0}-z7k2ojvdyf-z7k2ojvdyf.gz
+C:\Users\ramse\OneDrive\Escritorio\proyecto\Version con Python\CRUD-Gesti-n-Base-Datos\frontend-blazor\frontend-blazor.Client\obj\Debug\net8.0\compressed\9jhqaqoxrl-{0}-94h4he33pq-94h4he33pq.gz
